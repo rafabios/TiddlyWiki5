@@ -1,17 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
   labels:
     app: tiddlywiki
   name: tiddlywiki
   namespace: apps
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: tiddlywiki
-  strategy: {}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
   template:
     metadata:
       creationTimestamp: null
@@ -20,5 +22,30 @@ spec:
     spec:
       containers:
       - image: vemcompy/tiddlywiki:latest
+        imagePullPolicy: Always
         name: tiddlywiki
-        resources: {}
+        env:
+        - name: wiki_name
+          value: vemcompy
+        - name: wiki_port
+          value: "8080"
+        - name: wiki_username
+          value: admin
+        - name: wiki_password
+          value: admin
+        - name: gzip
+          value: "yes"
+        - name: "debug-level"
+          value: "none"
+        volumeMounts:
+        - mountPath: /app/vemcompy
+          name: volume
+      volumes:
+      - name: volume
+        hostPath:
+          path: /data 
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
